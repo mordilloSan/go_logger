@@ -1,82 +1,72 @@
 # Changelog
 
-## v2.0.0 - Simplified for LinuxIO (2025-10-25)
+All notable changes to this project will be documented in this file.
 
-Major refactoring to simplify the logger for single-deployment Linux applications.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Breaking Changes
+## [v1.0.0] - 2025-10-25
 
-- **Removed JSON output** - Journald already provides structured logging
-- **Removed Config struct** - Single `Init(mode, verbose)` is sufficient
-- **Removed NewLogger/Logger interface** - No dependency injection needed
-- **Removed context extraction** - `ContextKeys`, `*Context()` methods removed
-- **Removed API helpers** - `API()`, `APIContext()` methods removed
-- **Removed `With()` and `WithGroup()`** - Simplified to global functions only
+### Initial Release
 
-### New Features
+Simple, Linux-focused logger optimized for system utilities and single-deployment applications.
 
-- **Structured logging** - New `*KV()` methods for key-value pairs:
-  - `InfoKV(msg string, keyvals ...any)`
-  - `ErrorKV(msg string, keyvals ...any)`
+#### Features
+
+- **Simple API** - Single `Init(mode, verbose)` call, no complex configuration
+- **Global package-level functions** - No dependency injection needed
+- **Automatic caller tagging** - `[package.Function:line]` in every log message
+- **Structured logging** - Key-value pairs with `*KV()` methods:
   - `DebugKV(msg string, keyvals ...any)`
+  - `InfoKV(msg string, keyvals ...any)`
   - `WarnKV(msg string, keyvals ...any)`
+  - `ErrorKV(msg string, keyvals ...any)`
+- **Level filtering** - Via `LOGGER_LEVELS` environment variable
+- **Journald integration** - First-class systemd-journald support with `SYSLOG_IDENTIFIER`
+- **Development mode** - Colorized output (cyan DEBUG, green INFO, yellow WARN, red ERROR)
+- **Production mode** - Logs to journald or stdout/stderr fallback
 
-- **Level filtering** - Control which levels are logged:
-  - Via `LOGGER_LEVELS` environment variable
-  - Examples: `LOGGER_LEVELS="INFO,ERROR"`, `LOGGER_LEVELS="ERROR"`
-  - Supports: DEBUG, INFO, WARN, WARNING, ERROR
+#### API
 
-- **Better caller detection** - Now includes line numbers:
-  - Format: `[package.Function:line]` instead of `[package.Function]`
-  - More accurate stack depth handling
+Initialization:
+- `Init(mode string, verbose bool)`
 
-### Improvements
+Formatted logging:
+- `Debugf(format string, v ...interface{})`
+- `Infof(format string, v ...interface{})`
+- `Warnf(format string, v ...interface{})`
+- `Errorf(format string, v ...interface{})`
 
-- Reduced code size by ~50% (503 lines → 355 lines)
-- Simpler API surface (3 functions → same 3 + 4 new KV variants)
-- Better test coverage for new features
-- Clearer documentation focused on single-deployment use cases
+Plain logging:
+- `Debugln(v ...interface{})`
+- `Infoln(v ...interface{})`
+- `Warnln(v ...interface{})`
+- `Errorln(v ...interface{})`
 
-### Migration Guide
+Structured logging (NEW):
+- `DebugKV(msg string, keyvals ...any)`
+- `InfoKV(msg string, keyvals ...any)`
+- `WarnKV(msg string, keyvals ...any)`
+- `ErrorKV(msg string, keyvals ...any)`
 
-If you were using the old API:
+#### Perfect For
 
-**Before (v1.x):**
-```go
-cfg := logger.Config{
-    Mode:        "production",
-    JSON:        true,
-    UseJournald: true,
-}
-log, _ := logger.NewLogger(cfg)
-log.Info("server started", "port", 8080)
-```
-
-**After (v2.0):**
-```go
-logger.Init("production", false)
-logger.InfoKV("server started", "port", 8080)
-```
-
-**Removed features and alternatives:**
-- JSON output → Use journald's native structured logging
-- Context extraction → Pass values explicitly as key-value pairs
-- API helpers → Use regular logging with status codes as KV pairs
-- `With()`/`WithGroup()` → Use package-level functions directly
-
-### Why These Changes?
-
-This logger is optimized for:
 - System utilities and daemons
-- Single-deployment applications
-- Linux systems with journald
-- Simple, straightforward logging needs
+- Web servers and APIs
+- CLI applications
+- System management dashboards
+- Bridge processes requiring elevated privileges
 
-Not ideal for:
+#### Not Ideal For
+
 - Cloud-native microservices (use structured JSON loggers)
-- Complex distributed tracing (use OpenTelemetry)
 - Windows/macOS applications (no journald)
+- Distributed tracing (use OpenTelemetry)
 
-## v1.0.0 - Initial Release
+#### Requirements
 
-Original feature-rich logger with DI, JSON output, and context extraction.
+- Go 1.22+
+- Linux (for journald integration)
+- `github.com/coreos/go-systemd/v22`
+
+[v1.0.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.0.0
