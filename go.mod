@@ -1,5 +1,5 @@
-module github.com/mordilloSan/linuxio-logger
+module github.com/mordilloSan/go_logger
 
-go 1.25.0
+go 1.23
 
 require github.com/coreos/go-systemd/v22 v22.6.0
