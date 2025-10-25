@@ -38,6 +38,11 @@
 //	    "status", 200,
 //	    "path", "/api/users")
 //
+// Fatal logging (logs and exits):
+//
+//	logger.Fatalf("critical error: %v", err)
+//	logger.FatalKV("shutdown required", "reason", "out of memory")
+//
 // # Level Filtering
 //
 // Control which levels are logged via environment variable:

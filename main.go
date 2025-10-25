@@ -40,4 +40,14 @@ func main() {
 		"key", "user:123",
 		"hit", true,
 		"ttl_seconds", 300)
+
+	// API logging (automatic level selection based on HTTP status code)
+	logx.Api(200, "request successful")
+	logx.Api(301, "redirect to new location")
+	logx.Api(404, "resource not found")
+	logx.Api(500, "internal server error")
+
+	// Uncomment to test Fatal methods (will exit the program):
+	// logx.Fatalf("critical error: %v", "system failure")
+	// logx.FatalKV("critical error", "component", "database", "action", "shutdown")
 }

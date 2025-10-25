@@ -83,6 +83,7 @@ Behavior summary:
 - `Infof(format string, v ...interface{})`
 - `Warnf(format string, v ...interface{})`
 - `Errorf(format string, v ...interface{})`
+- `Fatalf(format string, v ...interface{})` - Logs and calls `os.Exit(1)`
 
 ### Plain Logging (Println-style)
 
@@ -90,6 +91,7 @@ Behavior summary:
 - `Infoln(v ...interface{})`
 - `Warnln(v ...interface{})`
 - `Errorln(v ...interface{})`
+- `Fatalln(v ...interface{})` - Logs and calls `os.Exit(1)`
 
 ### Structured Logging (Key-Value Pairs)
 
@@ -97,6 +99,7 @@ Behavior summary:
 - `InfoKV(msg string, keyvals ...any)`
 - `WarnKV(msg string, keyvals ...any)`
 - `ErrorKV(msg string, keyvals ...any)`
+- `FatalKV(msg string, keyvals ...any)` - Logs and calls `os.Exit(1)`
 
 Example:
 ```go
@@ -104,6 +107,22 @@ logx.InfoKV("user logged in",
     "user_id", 123,
     "ip", "192.168.1.1",
     "device", "mobile")
+```
+
+### API Logging (HTTP Status Code Based)
+
+- `Api(statusCode int, msg string)` - Automatic level selection
+
+Automatically selects log level based on HTTP status code:
+- **1xx, 2xx, 3xx** → INFO (green) - Success and redirects
+- **4xx** → WARN (yellow) - Client errors
+- **5xx** → ERROR (red) - Server errors
+
+Example:
+```go
+logx.Api(200, "request successful")
+logx.Api(404, "resource not found")
+logx.Api(500, "internal server error")
 ```
 
 ## Level Filtering
@@ -121,7 +140,7 @@ LOGGER_LEVELS="ERROR" ./myapp
 ./myapp
 ```
 
-Valid level names: `DEBUG`, `INFO`, `WARN`, `WARNING`, `ERROR`
+Valid level names: `DEBUG`, `INFO`, `WARN`, `WARNING`, `ERROR`, `FATAL`
 
 ## Output Examples
 
