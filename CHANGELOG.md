@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **File logging support** - Log to both console and file simultaneously:
+  - `InitWithFile(mode string, verbose bool, filePath string)` - New initialization function with file output
+  - `Close() error` - Close the log file (call with `defer` after `InitWithFile`)
+  - Logs written to both console and file in parallel using `io.MultiWriter`
+  - ANSI color codes automatically stripped from file output (plain text)
+  - Files opened in append mode with 0644 permissions
+  - Graceful error handling - logger continues to work even if file cannot be opened
+
+- **Comprehensive file logging tests** - 8 new tests validating file functionality:
+  - `TestFileLogging_Development` - Verify file output in development mode
+  - `TestFileLogging_Production` - Verify file output in production mode
+  - `TestFileLogging_Append` - Ensure logs append instead of overwriting
+  - `TestFileLogging_InvalidPath` - Graceful handling of invalid file paths
+  - `TestFileLogging_Close` - Proper file closing behavior
+  - `TestFileLogging_NoFile` - Backward compatibility without file logging
+  - `TestFileLogging_AllLevels` - All logging methods work with file output
+  - `TestInit_BackwardCompatible` - Old `Init()` function still works
+
+### Changed
+
+- **Updated README** - Added file logging documentation with examples
+- **Updated main.go** - Demonstrate file logging with command-line argument
+
 ## [v1.3.0] - 2025-10-26
 
 ### Added

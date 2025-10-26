@@ -10,12 +10,26 @@ import (
 // Example demonstrating the simplified go_logger usage.
 func main() {
 	mode := "development"
+	logFile := ""
+
 	if len(os.Args) > 1 {
 		mode = os.Args[1]
 	}
+	if len(os.Args) > 2 {
+		logFile = os.Args[2]
+	}
 
-	// Simple init - just mode and verbose flag
-	logger.Init(mode, mode == "development")
+	// Initialize logger with optional file logging
+	// Usage: ./go_logger [mode] [logfile]
+	// Example: ./go_logger development ./app.log
+	if logFile != "" {
+		logger.InitWithFile(mode, mode == "development", logFile)
+		defer logger.Close() // Don't forget to close the log file!
+		logger.Infof("Logging to file: %s", logFile)
+	} else {
+		logger.Init(mode, mode == "development")
+		logger.Infof("Logging to console only (provide log file path as 2nd argument to enable file logging)")
+	}
 
 	// Formatted logging (classic)
 	logger.Debugf("starting at %v", time.Now())
@@ -23,7 +37,7 @@ func main() {
 	logger.Warnln("be careful")
 	logger.Errorf("oops: %v", "something happened")
 
-	// Structured logging with key-value pairs (NEW!)
+	// Structured logging with key-value pairs
 	logger.InfoKV("request completed",
 		"duration_ms", 42,
 		"status", 200,

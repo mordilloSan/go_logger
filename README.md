@@ -10,6 +10,7 @@ Simple, Linux-focused Go logger with automatic caller tagging and systemd-journa
 - **Colorized development output** - INFO/WARN/ERROR to stdout with colors
 - **Optional DEBUG** in development via `verbose` flag
 - **Production logging** to systemd-journald with `SYSLOG_IDENTIFIER`
+- **File logging** - Log to both console and file simultaneously
 - **Automatic caller tagging** - `[package.Function:line]` added to every message
 - **Structured logging** - Key-value pairs for better debugging
 - **Level filtering** - Control which levels are logged via environment variable
@@ -65,17 +66,33 @@ logx.ErrorKV("database connection failed",
     "error", err)
 ```
 
+### File Logging
+
+```go
+// Log to both console and file simultaneously
+// Console output is colorized (in dev mode), file output is plain text
+logx.InitWithFile("development", true, "/var/log/myapp.log")
+defer logx.Close() // Don't forget to close the log file!
+
+logx.Infof("application started")
+// Console: [INFO] 2025/10/26 10:30:45 [main.main:15] application started (colored)
+// File:    [INFO] 2025/10/26 10:30:45 [main.main:15] application started (plain text)
+```
+
 Behavior summary:
 
 - **Production + journald available:** Send all levels to journald
 - **Production + no journald:** Log plainly to stdout/stderr (INFO/DEBUG to stdout; WARN/ERROR to stderr)
 - **Development:** Colorized output to stdout; DEBUG enabled by the `verbose` flag
+- **File logging:** Logs written to both console and file; ANSI color codes automatically stripped from file output
 
 ## API
 
 ### Initialization
 
 - `Init(mode string, verbose bool)` - Setup logger for `"development"` or `"production"`
+- `InitWithFile(mode string, verbose bool, filePath string)` - Setup logger with file output
+- `Close() error` - Close the log file (call with `defer` after `InitWithFile`)
 
 ### Formatted Logging (with fmt.Sprintf)
 
@@ -259,8 +276,9 @@ go_logger/
 Run the example app:
 
 ```bash
-go run .                # development mode
-go run . production     # production mode
+go run .                      # development mode (console only)
+go run . development app.log  # development mode with file logging
+go run . production           # production mode
 ```
 
 ## Common Tasks

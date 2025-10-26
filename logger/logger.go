@@ -46,6 +46,9 @@ var (
 		ErrorLevel: true,
 		FatalLevel: true,
 	}
+
+	// logFile holds the file handle for file logging (if enabled)
+	logFile *os.File
 )
 
 // Dependency injection points for testing journald behavior and outputs.
@@ -63,11 +66,31 @@ var (
 // Set verbose=true to enable DEBUG logs in development mode.
 // Respects LOGGER_LEVELS environment variable for filtering (e.g., "INFO,ERROR").
 func Init(logMode string, verboseMode bool) {
+	InitWithFile(logMode, verboseMode, "")
+}
+
+// InitWithFile initializes the logger with optional file logging.
+// If filePath is non-empty, logs will be written to both console and file.
+// The file is created with append mode and 0644 permissions.
+// Call Close() to properly close the log file when shutting down.
+func InitWithFile(logMode string, verboseMode bool, filePath string) {
 	programName = filepath.Base(os.Args[0])
 
 	// Parse level filtering from environment
 	if levels := os.Getenv("LOGGER_LEVELS"); levels != "" {
 		enabledLevels = parseLevels(levels)
+	}
+
+	// Open log file if specified
+	var fileWriter io.Writer
+	if filePath != "" {
+		f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to open log file %s: %v\n", filePath, err)
+		} else {
+			logFile = f
+			fileWriter = f
+		}
 	}
 
 	if logMode == "production" {
@@ -78,21 +101,32 @@ func Init(logMode string, verboseMode bool) {
 			Error = log.New(journalWriter{journal.PriErr}, "", 0)
 			Fatal = log.New(journalWriter{journal.PriCrit}, "", 0)
 		} else {
-			Debug = newPlainLogger(outStdout, "DEBUG")
-			Info = newPlainLogger(outStdout, "INFO")
-			Warning = newPlainLogger(outStderr, "WARN")
-			Error = newPlainLogger(outStderr, "ERROR")
-			Fatal = newPlainLogger(outStderr, "FATAL")
+			Debug = newPlainLogger(outStdout, "DEBUG", fileWriter)
+			Info = newPlainLogger(outStdout, "INFO", fileWriter)
+			Warning = newPlainLogger(outStderr, "WARN", fileWriter)
+			Error = newPlainLogger(outStderr, "ERROR", fileWriter)
+			Fatal = newPlainLogger(outStderr, "FATAL", fileWriter)
 		}
 		return
 	}
 
 	// Development mode
-	Debug = newDevLogger(outStdout, "DEBUG", verboseMode)
-	Info = newDevLogger(outStdout, "INFO", true)
-	Warning = newDevLogger(outStdout, "WARN", true)
-	Error = newDevLogger(outStdout, "ERROR", true)
-	Fatal = newDevLogger(outStderr, "FATAL", true)
+	Debug = newDevLogger(outStdout, "DEBUG", verboseMode, fileWriter)
+	Info = newDevLogger(outStdout, "INFO", true, fileWriter)
+	Warning = newDevLogger(outStdout, "WARN", true, fileWriter)
+	Error = newDevLogger(outStdout, "ERROR", true, fileWriter)
+	Fatal = newDevLogger(outStderr, "FATAL", true, fileWriter)
+}
+
+// Close closes the log file if it was opened.
+// Call this function when your application shuts down to ensure logs are flushed.
+func Close() error {
+	if logFile != nil {
+		err := logFile.Close()
+		logFile = nil
+		return err
+	}
+	return nil
 }
 
 // parseLevels parses a comma-separated list of level names.
@@ -147,7 +181,8 @@ func (j journalWriter) Write(p []byte) (int, error) {
 }
 
 // newDevLogger returns a colored logger for the level, or discards if disabled.
-func newDevLogger(out io.Writer, level string, enabled bool) *log.Logger {
+// If fileWriter is provided, logs are written to both console and file.
+func newDevLogger(out io.Writer, level string, enabled bool, fileWriter io.Writer) *log.Logger {
 	if !enabled {
 		return log.New(io.Discard, "", 0)
 	}
@@ -160,13 +195,54 @@ func newDevLogger(out io.Writer, level string, enabled bool) *log.Logger {
 	}
 	reset := "\033[0m"
 	levelLabel := fmt.Sprintf("%s[%s]%s", colors[level], level, reset)
+
+	// Combine console and file output if file writer is provided
+	if fileWriter != nil {
+		// Write colored output to console, plain output to file
+		return log.New(io.MultiWriter(out, &plainFileWriter{w: fileWriter, level: level}), levelLabel+" ", log.LstdFlags)
+	}
 	return log.New(out, levelLabel+" ", log.LstdFlags)
 }
 
 // newPlainLogger returns a non-colored logger for production stdout/stderr fallback.
-func newPlainLogger(out io.Writer, level string) *log.Logger {
+// If fileWriter is provided, logs are written to both console and file.
+func newPlainLogger(out io.Writer, level string, fileWriter io.Writer) *log.Logger {
 	prefix := fmt.Sprintf("[%s] ", level)
+	if fileWriter != nil {
+		return log.New(io.MultiWriter(out, fileWriter), prefix, log.LstdFlags)
+	}
 	return log.New(out, prefix, log.LstdFlags)
+}
+
+// plainFileWriter wraps a file writer to strip ANSI color codes before writing.
+type plainFileWriter struct {
+	w     io.Writer
+	level string
+}
+
+func (p *plainFileWriter) Write(data []byte) (int, error) {
+	// Strip ANSI color codes (basic implementation)
+	s := string(data)
+	// Remove color codes like \033[36m and \033[0m
+	var result strings.Builder
+	inEscape := false
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\033' && i+1 < len(s) && s[i+1] == '[' {
+			inEscape = true
+			continue
+		}
+		if inEscape {
+			if s[i] == 'm' {
+				inEscape = false
+			}
+			continue
+		}
+		result.WriteByte(s[i])
+	}
+
+	// The log.Logger already adds the level prefix, so we just need to strip colors
+	// Don't add duplicate level prefix here
+	return p.w.Write([]byte(result.String()))
 }
 
 // getCallerInfo returns formatted caller information at the specified stack depth.
