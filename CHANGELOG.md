@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.0] - 2025-10-26
+
+### Added
+
+- **Makefile for automation** - Simplify common development tasks:
+  - `make test` - Run all tests with verbose output
+  - `make fmt` - Format all Go code
+  - `make vet` - Run static analysis
+  - `make all` - Run fmt, vet, and test (default target)
+  - `make pre-release` - Run all checks before creating a release
+  - `make clean` - Clean build cache
+  - `make help` - Show available targets
+
+### Changed
+
+- **Updated README** - Added Makefile documentation to Common Tasks section
+
 ## [v1.1.0] - 2025-10-25
 
 ### Added
@@ -118,5 +135,6 @@ Structured logging (NEW):
 - Linux (for journald integration)
 - `github.com/coreos/go-systemd/v22`
 
+[v1.2.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.2.0
 [v1.1.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.1.0
 [v1.0.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.0.0

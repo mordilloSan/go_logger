@@ -226,10 +226,25 @@ go run . production     # production mode
 
 ## Common Tasks
 
+### Using Makefile (Recommended)
+
+```bash
+make              # Run fmt, vet, and test (default)
+make test         # Run all tests with verbose output
+make fmt          # Format code
+make vet          # Run static analysis
+make pre-release  # Run all checks before creating a release
+make clean        # Clean build cache
+make help         # Show all available targets
+```
+
+### Using Go Commands Directly
+
 ```bash
 go fmt ./...      # Format code
 go vet ./...      # Lint
 go test ./...     # Run tests
+go test -v ./...  # Run tests with verbose output
 ```
 
 ## Why This Logger?

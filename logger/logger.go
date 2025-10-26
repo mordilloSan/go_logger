@@ -449,9 +449,10 @@ func FatalKV(msg string, keyvals ...any) {
 // Thread-safe for concurrent use.
 //
 // Example:
-//   logger.Api(200, "api call successful")
-//   logger.Api(404, "resource not found")
-//   logger.Api(500, "internal server error")
+//
+//	logger.Api(200, "api call successful")
+//	logger.Api(404, "resource not found")
+//	logger.Api(500, "internal server error")
 func Api(statusCode int, msg string) {
 	level := statusCodeToLevel(statusCode)
 	if !isLevelEnabled(level) {
