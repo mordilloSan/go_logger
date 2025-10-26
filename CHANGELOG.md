@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.4.0] - 2025-10-26
 
 ### Added
 
@@ -203,6 +203,7 @@ Structured logging (NEW):
 - Linux (for journald integration)
 - `github.com/coreos/go-systemd/v22`
 
+[v1.4.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.4.0
 [v1.3.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.3.0
 [v1.2.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.2.0
 [v1.1.0]: https://github.com/mordilloSan/go_logger/releases/tag/v1.1.0
