@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -82,6 +83,35 @@ func TestFileLogging_Production(t *testing.T) {
 	}
 	if !strings.Contains(log, "production error") {
 		t.Errorf("log should contain production error, got: %q", log)
+	}
+}
+
+func TestFileLogging_Production_Timestamps(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "prod-ts.log")
+
+	InitWithFile("production", false, logPath)
+	defer Close()
+
+	Infof("production info")
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("failed to read log file: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(content)), "\n")
+	if len(lines) == 0 {
+		t.Fatalf("expected at least one log line in file")
+	}
+
+	first := lines[0]
+	tsPattern := regexp.MustCompile(`^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `)
+	if !tsPattern.MatchString(first) {
+		t.Fatalf("production file logs should include date/time, got: %q", first)
+	}
+	if !strings.Contains(first, "[INFO]") {
+		t.Fatalf("production file logs should include level prefix, got: %q", first)
 	}
 }
 

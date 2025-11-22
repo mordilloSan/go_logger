@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Levels define log severity.
@@ -174,9 +175,9 @@ func newDevLogger(out io.Writer, level string, enabled bool, fileWriter io.Write
 func newPlainLogger(out io.Writer, level string, fileWriter io.Writer) *log.Logger {
 	prefix := fmt.Sprintf("[%s] ", level)
 	if fileWriter != nil {
-		return log.New(io.MultiWriter(out, fileWriter), prefix, log.LstdFlags)
+		return log.New(io.MultiWriter(out, &timestampWriter{w: fileWriter}), prefix, 0)
 	}
-	return log.New(out, prefix, log.LstdFlags)
+	return log.New(out, prefix, 0)
 }
 
 // plainFileWriter wraps a file writer to strip ANSI color codes before writing.
@@ -208,6 +209,20 @@ func (p *plainFileWriter) Write(data []byte) (int, error) {
 	// The log.Logger already adds the level prefix, so we just need to strip colors
 	// Don't add duplicate level prefix here
 	return p.w.Write([]byte(result.String()))
+}
+
+// timestampWriter prepends a timestamp to each log line for file outputs.
+// Used to keep timestamps in files while omitting them from stdout/stderr in production.
+type timestampWriter struct {
+	w io.Writer
+}
+
+func (t *timestampWriter) Write(data []byte) (int, error) {
+	ts := time.Now().Format("2006/01/02 15:04:05 ")
+	buf := make([]byte, 0, len(ts)+len(data))
+	buf = append(buf, ts...)
+	buf = append(buf, data...)
+	return t.w.Write(buf)
 }
 
 // getCallerInfo returns formatted caller information at the specified stack depth.

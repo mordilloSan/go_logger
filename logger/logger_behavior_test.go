@@ -71,3 +71,21 @@ func TestDevelopmentVerboseTogglesDebug(t *testing.T) {
 		t.Fatalf("debug should be enabled in development when verbose=true, got: %q", got)
 	}
 }
+
+func TestProductionStdout_NoTimestamps(t *testing.T) {
+	var stdoutBuf bytes.Buffer
+	oldStdout := outStdout
+	defer func() { outStdout = oldStdout }()
+	outStdout = &stdoutBuf
+
+	Init("production", false)
+	Infoln("no timestamp expected")
+
+	line := strings.SplitN(stdoutBuf.String(), "\n", 2)[0]
+	if !strings.HasPrefix(line, "[INFO] ") {
+		t.Fatalf("production stdout should start with level prefix, got: %q", line)
+	}
+	if len(line) >= 5 && line[0] >= '0' && line[0] <= '9' && line[4] == '/' {
+		t.Fatalf("production stdout should omit date/time when not logging to file, got: %q", line)
+	}
+}
