@@ -1,15 +1,9 @@
 // Package logger provides a simple leveled logger with
-// automatic caller function tagging and first-class Linux
-// systemd-journald integration.
+// automatic caller function tagging and optional file output.
 //
 // # Development Mode
 //
 // Colorized INFO/WARN/ERROR to stdout, DEBUG enabled only when verbose is true.
-//
-// # Production Mode
-//
-// When journald is available, all levels go to the journal.
-// When journald is not available, logs go to stdout/stderr (plain text).
 //
 // # Features
 //
@@ -17,7 +11,7 @@
 //   - Automatic caller tagging [package.Function:line]
 //   - Structured logging with key-value pairs
 //   - Level filtering via LOGGER_LEVELS environment variable
-//   - Journald integration with SYSLOG_IDENTIFIER
+//   - Optional file logging with color stripping for files
 //
 // # Usage
 //
@@ -49,5 +43,5 @@
 //
 //	LOGGER_LEVELS="INFO,ERROR" ./myapp
 //
-// This package is Linux-focused due to the journald dependency.
+// This package is lightweight and has no external dependencies.
 package logger

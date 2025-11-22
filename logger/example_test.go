@@ -15,8 +15,7 @@ func ExampleInit_development() {
 
 // This example shows a typical production setup.
 func ExampleInit_production() {
-	// When journald is available, messages are sent to the systemd journal.
-	// Otherwise, logs go to stdout/stderr plainly.
+	// Production logs go to stdout/stderr plainly.
 	logger.Init("production", false)
 	logger.Infof("ready")
 }
