@@ -55,7 +55,7 @@ func main() {
 ### Production Mode
 
 ```go
-// Production uses plain stdout/stderr (no colors).
+// Production uses plain stdout/stderr (no colors, no timestamps when not logging to file).
 logx.Init("production", false)
 
 logx.Infof("server started on port %d", 8080)
@@ -80,7 +80,7 @@ logx.Infof("application started")
 
 Behavior summary:
 
-- **Production:** Plain output to stdout/stderr (INFO/DEBUG to stdout; WARN/ERROR to stderr)
+- **Production:** Plain output to stdout/stderr with no timestamps when not logging to a file (INFO/DEBUG to stdout; WARN/ERROR to stderr)
 - **Development:** Colorized output to stdout; DEBUG enabled by the `verbose` flag
 - **File logging:** Logs written to both console and file; ANSI color codes automatically stripped from file output
 
