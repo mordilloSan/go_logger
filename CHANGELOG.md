@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.5.0] - 2025-11-22
+
 ### Removed
 
 - Journald integration. Production mode now always logs plainly to stdout/stderr and no longer depends on systemd.
@@ -14,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - README and documentation updated to reflect stdout/stderr-only production output and zero external dependencies.
+- Removed go-systemd dependency from `go.mod`.
 
 ## [v1.4.0] - 2025-10-26
 
