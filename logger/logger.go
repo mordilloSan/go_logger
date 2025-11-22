@@ -5,12 +5,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
-
-	"github.com/coreos/go-systemd/v22/journal"
 )
 
 // Levels define log severity.
@@ -33,8 +30,6 @@ var (
 	Error   = log.New(io.Discard, "", 0)
 	Fatal   = log.New(io.Discard, "", 0)
 
-	programName string // used for journald SYSLOG_IDENTIFIER
-
 	// Mutex for thread-safe logging across concurrent goroutines
 	logMutex sync.Mutex
 
@@ -51,18 +46,14 @@ var (
 	logFile *os.File
 )
 
-// Dependency injection points for testing journald behavior and outputs.
+// Dependency injection points for testing outputs.
 var (
-	journalIsEnabled = journal.Enabled
-	journalSendFunc  = func(msg string, priority journal.Priority, vars map[string]string) error {
-		return journal.Send(msg, priority, vars)
-	}
 	outStdout io.Writer = os.Stdout
 	outStderr io.Writer = os.Stderr
 )
 
 // Init initializes the logger for development or production mode.
-// Development uses colored stdout; production prefers journald, else stdout/stderr.
+// Development uses colored stdout; production uses plain stdout/stderr.
 // Set verbose=true to enable DEBUG logs in development mode.
 // Respects LOGGER_LEVELS environment variable for filtering (e.g., "INFO,ERROR").
 func Init(logMode string, verboseMode bool) {
@@ -74,8 +65,6 @@ func Init(logMode string, verboseMode bool) {
 // The file is created with append mode and 0644 permissions.
 // Call Close() to properly close the log file when shutting down.
 func InitWithFile(logMode string, verboseMode bool, filePath string) {
-	programName = filepath.Base(os.Args[0])
-
 	// Parse level filtering from environment
 	if levels := os.Getenv("LOGGER_LEVELS"); levels != "" {
 		enabledLevels = parseLevels(levels)
@@ -94,19 +83,11 @@ func InitWithFile(logMode string, verboseMode bool, filePath string) {
 	}
 
 	if logMode == "production" {
-		if journalIsEnabled() {
-			Debug = log.New(journalWriter{journal.PriDebug}, "", 0)
-			Info = log.New(journalWriter{journal.PriInfo}, "", 0)
-			Warning = log.New(journalWriter{journal.PriWarning}, "", 0)
-			Error = log.New(journalWriter{journal.PriErr}, "", 0)
-			Fatal = log.New(journalWriter{journal.PriCrit}, "", 0)
-		} else {
-			Debug = newPlainLogger(outStdout, "DEBUG", fileWriter)
-			Info = newPlainLogger(outStdout, "INFO", fileWriter)
-			Warning = newPlainLogger(outStderr, "WARN", fileWriter)
-			Error = newPlainLogger(outStderr, "ERROR", fileWriter)
-			Fatal = newPlainLogger(outStderr, "FATAL", fileWriter)
-		}
+		Debug = newPlainLogger(outStdout, "DEBUG", fileWriter)
+		Info = newPlainLogger(outStdout, "INFO", fileWriter)
+		Warning = newPlainLogger(outStderr, "WARN", fileWriter)
+		Error = newPlainLogger(outStderr, "ERROR", fileWriter)
+		Fatal = newPlainLogger(outStderr, "FATAL", fileWriter)
 		return
 	}
 
@@ -162,22 +143,6 @@ func parseLevels(s string) map[Level]bool {
 // isLevelEnabled checks if a level is enabled for logging.
 func isLevelEnabled(level Level) bool {
 	return enabledLevels[level]
-}
-
-// journalWriter writes to systemd journal with the program name as identifier.
-type journalWriter struct {
-	priority journal.Priority
-}
-
-func (j journalWriter) Write(p []byte) (int, error) {
-	msg := strings.TrimSuffix(string(p), "\n")
-	err := journalSendFunc(msg, j.priority, map[string]string{
-		"SYSLOG_IDENTIFIER": programName,
-	})
-	if err != nil {
-		return 0, err
-	}
-	return len(p), nil
 }
 
 // newDevLogger returns a colored logger for the level, or discards if disabled.

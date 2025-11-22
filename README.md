@@ -3,19 +3,19 @@
 ![CI](https://github.com/mordilloSan/go_logger/actions/workflows/ci.yml/badge.svg)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mordilloSan/go_logger/logger.svg)](https://pkg.go.dev/github.com/mordilloSan/go_logger/logger)
 
-Simple, Linux-focused Go logger with automatic caller tagging and systemd-journald integration.
+Simple Go logger with automatic caller tagging and optional file output.
 
 ## Features
 
 - **Colorized development output** - INFO/WARN/ERROR to stdout with colors
 - **Optional DEBUG** in development via `verbose` flag
-- **Production logging** to systemd-journald with `SYSLOG_IDENTIFIER`
+- **Production logging** to stdout/stderr (plain text)
 - **File logging** - Log to both console and file simultaneously
 - **Automatic caller tagging** - `[package.Function:line]` added to every message
 - **Structured logging** - Key-value pairs for better debugging
 - **Level filtering** - Control which levels are logged via environment variable
 
-> Note: This package targets Linux due to its journald dependency.
+> Note: This package uses only the Go standard library.
 
 ## Install
 
@@ -55,8 +55,7 @@ func main() {
 ### Production Mode
 
 ```go
-// In production, when journald is available, logs go to the systemd journal.
-// The SYSLOG_IDENTIFIER is set to the program (binary) name.
+// Production uses plain stdout/stderr (no colors).
 logx.Init("production", false)
 
 logx.Infof("server started on port %d", 8080)
@@ -81,8 +80,7 @@ logx.Infof("application started")
 
 Behavior summary:
 
-- **Production + journald available:** Send all levels to journald
-- **Production + no journald:** Log plainly to stdout/stderr (INFO/DEBUG to stdout; WARN/ERROR to stderr)
+- **Production:** Plain output to stdout/stderr (INFO/DEBUG to stdout; WARN/ERROR to stderr)
 - **Development:** Colorized output to stdout; DEBUG enabled by the `verbose` flag
 - **File logging:** Logs written to both console and file; ANSI color codes automatically stripped from file output
 
@@ -170,21 +168,6 @@ Valid level names: `DEBUG`, `INFO`, `WARN`, `WARNING`, `ERROR`, `FATAL`
 [ERROR] [myapp] 2025/10/25 10:30:47 [main.processJob:67] job failed job_id=123 error="timeout exceeded"
 ```
 
-### Production Mode (journald)
-
-Logs go to systemd journal and can be viewed with:
-
-```bash
-# View all logs for your app
-journalctl -t myapp
-
-# Filter by priority
-journalctl -t myapp -p err
-
-# Follow logs in real-time
-journalctl -t myapp -f
-```
-
 ## Use Cases
 
 Perfect for:
@@ -196,13 +179,12 @@ Perfect for:
 
 Not ideal for:
 - Cloud-native applications (use structured JSON loggers)
-- Windows/macOS applications (journald dependency)
 - Microservices sending logs to centralized systems
 
 ## Compatibility
 
 - **Go:** 1.22+
-- **OS:** Linux (journald integration)
+- **OS:** Works anywhere stdout/stderr are available (ANSI colors shown when terminal supports them)
 
 ## Testing
 
@@ -234,14 +216,13 @@ make test-concurrency  # Demo concurrency with live progress
 - Validates v1.1.0 claims about crash resilience
 
 **Core Functionality Tests**:
-- Production fallback when journald unavailable
-- Journald integration with correct priorities
+- Production output to stdout/stderr
 - Development mode DEBUG toggling
 - Level filtering
 - Caller info tagging
 - Structured logging (KV pairs)
 
-Tests do not require running journald; the logger uses injection points during tests.
+Tests do not require external services.
 
 ### See It In Action
 
@@ -310,9 +291,9 @@ go test -v ./...  # Run tests with verbose output
 ## Why This Logger?
 
 - **Simple:** Single `Init()` call, no configuration structs
-- **Zero dependencies:** Just the Go standard library + journald
+- **Zero dependencies:** Just the Go standard library
 - **Automatic caller info:** No manual tagging needed
-- **Production-ready:** Integrates with systemd-journald
+- **Production-ready:** Plain stdout/stderr output plus optional file logging
 - **Structured logging:** Key-value pairs for better debugging
 
 ## License

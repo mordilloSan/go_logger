@@ -64,11 +64,6 @@ func TestFileLogging_Production(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "prod.log")
 
-	// Mock journald as disabled for this test
-	oldJournalCheck := journalIsEnabled
-	journalIsEnabled = func() bool { return false }
-	defer func() { journalIsEnabled = oldJournalCheck }()
-
 	InitWithFile("production", false, logPath)
 	defer Close()
 
