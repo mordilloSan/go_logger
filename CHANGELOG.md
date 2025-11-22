@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.6.0] - 2025-11-22
+
 ### Changed
 
 - Production stdout/stderr output now omits timestamps when not logging to a file (journald already adds them), while file logs continue to include date and time.
